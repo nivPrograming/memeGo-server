@@ -10,11 +10,11 @@ class Key_Swap:
 
     @staticmethod
     def swap_keys(soc):
-        '''
+        """
         doesan rsa encrypted key swap
         :param soc: socket of the the client
         :return: an aes key that the client sends
-        '''
+        """
 
 
         # Sending the RSA public key

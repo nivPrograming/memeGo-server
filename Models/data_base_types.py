@@ -11,19 +11,18 @@ class User:
 class Creature:
     def __init__(self, ID, name, photo, rarity):
         self.Id = ID
-        self.name = name
-        self.photo = photo
+        self.Name = name
+        self.Photo = photo
         self.Rarity = rarity
 
 
 class CreaturesInTheWild:
-    def __init__(self, ID, type_id, resilience_points, geohash, lon, lat):
-        self.Id = ID
+    def __init__(self, type_id, resilience_points, geohash, lat, lon):
         self.Type = type_id
         self.Resilience_points = resilience_points
         self.Geohash = geohash
-        self.Lon = lon
         self.Lat = lat
+        self.Lon = lon
 
 
 class CreaturesCaught:

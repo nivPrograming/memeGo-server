@@ -1,6 +1,7 @@
 import socket
 import struct
 
+
 class Message:
     def __init__(self, opcode, status, *args):
         self.opcode = opcode

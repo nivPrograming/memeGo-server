@@ -1,8 +1,5 @@
-import pygeohash as pgh
-from geopy.distance import great_circle
 import sqlite3
 from Models.data_base_types import *
-
 
 
 class DataBase:
@@ -32,66 +29,39 @@ class DataBase:
 
         self.cursor.execute('''
                     CREATE TABLE IF NOT EXISTS creature_in_wild (
-                        id INTEGER PRIMARY KEY,
                         geohash TEXT NOT NULL,
-                        lon REAL NOT NULL,
                         lat REAL NOT NULL,
+                        lon REAL NOT NULL,
                         resilience_points INTEGER NOT NULL,
                         type INTEGER NOT NULL
                     )
                 ''')
 
     def get_creatures_in_geohash(self, gh):
-        self.cursor.execute("SELECT id, geohash, lon, lat, resilience_points, type "
+        self.cursor.execute("SELECT geohash, lat, lon, resilience_points, type "
                             "FROM creature_in_wild where geohash=?", (gh,))
 
         data = self.cursor.fetchall()
         creatures = []
         for creature in data:
-            creatures.append(CreaturesInTheWild(creature[0], creature[5], creature[4],
-                                                creature[1], creature[2], creature[3]))
+            creatures.append(CreaturesInTheWild(creature[4], creature[3], creature[0],
+                                                creature[1], creature[2]))
         return creatures
 
-    def find_creatures_around(self, lat, lon, r):
+    def get_creature_types(self):
+        self.cursor.execute("SELECT id, name, photo, rarity"
+                            "FROM creature")
+
+        data = self.cursor.fetchall()
         creatures = []
-        player_gh = pgh.encode(lat, lon, 7)
-        neighbors = self._geohash_neighbors(player_gh)
+        for creature in data:
+            creatures.append(Creature(creature[0], creature[1], creature[2], creature[3]))
+        return creatures
 
-        creatures += self.get_creatures_in_geohash(player_gh)
-        creatures += self.get_creatures_in_geohash(neighbors['n'])
-        creatures += self.get_creatures_in_geohash(neighbors['s'])
-        creatures += self.get_creatures_in_geohash(neighbors['e'])
-        creatures += self.get_creatures_in_geohash(neighbors['w'])
-        creatures += self.get_creatures_in_geohash(neighbors['ne'])
-        creatures += self.get_creatures_in_geohash(neighbors['nw'])
-        creatures += self.get_creatures_in_geohash(neighbors['se'])
-        creatures += self.get_creatures_in_geohash(neighbors['sw'])
+    def insert_new_creature(self, creature: CreaturesInTheWild):
+        self.cursor.execute("INSERT INTO creature_in_wild (geohash, lat, lon, resilience_points, type)"
+                            "VALUES (?, ?, ?, ?, ?",
+                            (creature.Geohash, creature.Lat, creature.Lon,
+                             creature.Resilience_points, creature.Type))
 
-        creatures_in_distance = []
-
-        for creature in creatures:
-            if great_circle((creature.lat, creature.lon), (lat, lon)).meters <= r:
-                creatures_in_distance.append(creature)
-
-        return creatures_in_distance
-
-    @staticmethod
-    def _geohash_neighbors(gh):
-        north = pgh.get_adjacent(gh, "n")
-        south = pgh.get_adjacent(gh, "s")
-        east = pgh.get_adjacent(gh, "e")
-        west = pgh.get_adjacent(gh, "w")
-
-        return {
-            "n": north,
-            "s": south,
-            "e": east,
-            "w": west,
-            "ne": pgh.get_adjacent(north, "e"),
-            "nw": pgh.get_adjacent(north, "w"),
-            "se": pgh.get_adjacent(south, "e"),
-            "sw": pgh.get_adjacent(south, "w"),
-        }
-
-
-
+        self.db_con.commit()
