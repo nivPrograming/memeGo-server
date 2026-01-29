@@ -30,7 +30,7 @@ class Communication:
             data = Message.load_from_bdata(dec_data)
             print(f"DATA: {data}")
             return data
-        return b''
+        return None
 
     @staticmethod
     def recv_by_size(sock):

@@ -8,8 +8,8 @@ import math
 
 
 class CreatureManager:
-    def __init__(self, db):
-        self.db = db
+    def __init__(self):
+        self.db = DataBase()
 
     def find_creatures_around(self, lat, lon, r):
         creatures = []

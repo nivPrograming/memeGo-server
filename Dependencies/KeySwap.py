@@ -1,9 +1,10 @@
 import socket
-import RSA
-import AES
+from Dependencies import RSA
+from Dependencies import AES
 
 from Models.Message import Message
-from Communication import Communication
+from Dependencies.Communication import Communication
+
 
 class Key_Swap:
     _privRSA, _publRSA = RSA.generate_rsa_keys()
@@ -22,9 +23,9 @@ class Key_Swap:
         msg_data = msg.prepare()
         Communication.send_with_size(soc, msg_data)
 
-        aes_key_msg = Message.load_from_bdata(Communication.recv_by_size())
+        aes_key_msg = Message.load_from_bdata(Communication.recv_by_size(soc))
         if len(aes_key_msg.fields) >= 1 and aes_key_msg.status == 0x0003 and aes_key_msg.opcode == 0x6969:
-            aes_key = RSA.decrypt_message(aes_key_msg[0], Key_Swap._privRSA)
+            aes_key = RSA.decrypt_message(aes_key_msg.fields[0], Key_Swap._privRSA)
 
             #in case of success
             msg = Message(0x6969, 0x0002, b"OK")

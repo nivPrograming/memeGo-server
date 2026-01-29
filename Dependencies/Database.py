@@ -10,8 +10,8 @@ class DataBase:
             self.db_con = sqlite3.connect("tralaleo tralala.db")
 
         self.pepper = None
-        with open('pepper.txt', 'rb') as f:
-            self.pepper = f.read()
+        #with open('../pepper.txt', 'rb') as f:
+        #    self.pepper = f.read()
 
         self.cursor = self.db_con.cursor()
 
