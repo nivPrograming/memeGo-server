@@ -1,7 +1,6 @@
 import sqlite3
 from Models.data_base_types import *
 
-
 class DataBase:
     def __init__(self, **kwargs):
         if 'name' in kwargs:
@@ -33,7 +32,8 @@ class DataBase:
                         lat REAL NOT NULL,
                         lon REAL NOT NULL,
                         resilience_points INTEGER NOT NULL,
-                        type INTEGER NOT NULL
+                        type INTEGER NOT NULL,
+                        insertion_time TEXT NUT NULL
                     )
                 ''')
 
@@ -49,7 +49,7 @@ class DataBase:
         return creatures
 
     def get_creature_types(self):
-        self.cursor.execute("SELECT id, name, photo, rarity"
+        self.cursor.execute("SELECT id, name, photo, rarity "
                             "FROM creature")
 
         data = self.cursor.fetchall()
@@ -59,9 +59,17 @@ class DataBase:
         return creatures
 
     def insert_new_creature(self, creature: CreaturesInTheWild):
-        self.cursor.execute("INSERT INTO creature_in_wild (geohash, lat, lon, resilience_points, type)"
-                            "VALUES (?, ?, ?, ?, ?",
+        self.cursor.execute("INSERT INTO creature_in_wild (geohash, lat, lon, resilience_points, type, insertion_time) "
+                            "VALUES (?, ?, ?, ?, ?, DATETIME('now'))",
                             (creature.Geohash, creature.Lat, creature.Lon,
                              creature.Resilience_points, creature.Type))
 
+        self.db_con.commit()
+
+    def remove_old_creatures(self):
+        minutes = 20
+        self.cursor.execute(
+            "DELETE FROM creature_in_wild WHERE insertion_time < datetime('now', ?)",
+            (f"-{minutes} minutes",)
+        )
         self.db_con.commit()

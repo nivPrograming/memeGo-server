@@ -4,7 +4,8 @@ from geopy.distance import great_circle, geodesic
 from Dependencies.Database import DataBase
 from Models.data_base_types import *
 import random
-import math
+import glob
+import json
 
 
 class CreatureManager:
@@ -13,7 +14,7 @@ class CreatureManager:
 
     def find_creatures_around(self, lat, lon, r):
         creatures = []
-        player_gh = pgh.encode(lat, lon, 7)
+        player_gh = pgh.encode(lat, lon, 6)
         neighbors = self._geohash_neighbors(player_gh)
 
         creatures += self.db.get_creatures_in_geohash(player_gh)
@@ -29,7 +30,7 @@ class CreatureManager:
         creatures_in_distance = []
 
         for creature in creatures:
-            if great_circle((creature.lat, creature.lon), (lat, lon)).meters <= r:
+            if great_circle((creature.Lat, creature.Lon), (lat, lon)).meters <= r:
                 creatures_in_distance.append(creature)
 
         return creatures_in_distance
@@ -40,12 +41,14 @@ class CreatureManager:
         :param locations: known locations of active users
         :return: new creatures in data_base
         """
-        types = self.db.get_creature_types()
+
+        max_creatures = 10
+        types = self._get_creatures()
 
         for usr in locations:
             existing_creatures = self.find_creatures_around(usr[0], usr[1], 600)
 
-            missing_c = max(0, 8 - len(existing_creatures))
+            missing_c = max(0, max_creatures - len(existing_creatures))
             for i in range(missing_c):
                 c = self._gen_random_creature(usr[0], usr[1], 600, types)
                 self.db.insert_new_creature(c)
@@ -55,14 +58,14 @@ class CreatureManager:
         c_type = random.choices(types, weights=[i.Rarity for i in types], k=1)[0]
         resilience_points = random.randrange(0, (10 - c_type.Rarity) * 1000)
 
-        distance = math.sqrt(random.random()) * r
+        distance = random.random() * r
         bearing = random.uniform(0, 360)
 
         destination = geodesic(meters=distance).destination((lat, lon), bearing)
 
-        gh = pgh.encode(destination.latitude, destination.longitude, precision=7)
+        gh = pgh.encode(destination.latitude, destination.longitude, precision=6)
 
-        return CreaturesInTheWild(c_type, resilience_points, gh, destination.latitude, destination.longitude)
+        return CreaturesInTheWild(c_type.Id, resilience_points, gh, destination.latitude, destination.longitude)
 
     @staticmethod
     def _geohash_neighbors(gh):
@@ -81,4 +84,18 @@ class CreatureManager:
             "se": pgh.get_adjacent(south, "right"),
             "sw": pgh.get_adjacent(south, "left"),
         }
+
+    @staticmethod
+    def _get_creatures():
+        creatures = []
+        files = glob.glob("./Creatures/*.json")
+        for file in files:
+            with open(file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                creatures.append(Creature(data['id'], data["name"], data["photo"], data["rarity"]))
+
+        return creatures
+
+
+
 
