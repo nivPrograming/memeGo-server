@@ -17,7 +17,7 @@ class Communication:
     def send(self, msg):
         data = msg.prepare()
 
-        enc_data = AES.aes_cbc_encrypt(data, self.key)
+        enc_data = AES.aes_gcm_encrypt(data, self.key)
         print(f"Encrypted: {data} To: {enc_data}\nkey: {self.key}")
 
         self.send_with_size(self.soc, enc_data)
@@ -25,10 +25,11 @@ class Communication:
     def recv(self):
         data = self.recv_by_size(self.soc)
         if data != b'':
-            dec_data = AES.aes_cbc_decrypt(data, self.key)
+            print(data)
+            dec_data = AES.aes_gcm_decrypt(data, self.key)
 
             data = Message.load_from_bdata(dec_data)
-            print(f"DATA: {data}")
+            print(f"DATA: {data.fields}")
             return data
         return None
 
