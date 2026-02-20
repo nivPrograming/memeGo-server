@@ -21,7 +21,9 @@ def main(ip, port):
         print(key)
         com = Communication(c_socket, key)
         t = Thread(com)
+        gen_t.lock.acquire()
         gen_t.threads.append(t)
+        gen_t.lock.release()
         t.start()
 
 

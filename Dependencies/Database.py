@@ -1,6 +1,7 @@
 import sqlite3
 from hashlib import sha256
 import random
+from Dependencies.JWTHelper import JWTHelper
 
 from Models.data_base_types import *
 
@@ -13,8 +14,8 @@ class DataBase:
             self.db_con = sqlite3.connect("tralaleo tralala.db")
 
         self.pepper = None
-        #with open('../pepper.txt', 'rb') as f:
-        #    self.pepper = f.read()
+        with open('pepper.txt', 'rb') as f:
+            self.pepper = f.read()
 
         self.cursor = self.db_con.cursor()
 
@@ -47,8 +48,7 @@ class DataBase:
                                email TEXT NOT NULL,
                                username TEXT NOT NULL,
                                psw_hash TEXT NOT NULL,
-                               salt TEXT NOT NULL,
-                               token TEXT NOT NULL
+                               salt TEXT NOT NULL
                            )
                        ''')
 
@@ -81,7 +81,6 @@ class DataBase:
 
         self.db_con.commit()
 
-
     def remove_old_creatures(self):
         minutes = 20
         self.cursor.execute(
@@ -92,7 +91,7 @@ class DataBase:
 
     def get_usr(self, email):
         self.cursor.execute(
-            "SELECT id, email, username, psw_hash, salt, token FROM users "
+            "SELECT id, email, username, psw_hash, salt FROM users "
             "WHERE email = ?", (email,)
         )
 
@@ -101,7 +100,7 @@ class DataBase:
         if len(usr) == 0 or len(usr) > 1:
             return None
 
-        return User(usr[0][0], usr[0][2], usr[0][1], usr[0][3], usr[0][4], usr[0][5])
+        return User(usr[0][0], usr[0][2], usr[0][1], usr[0][3], usr[0][4])
 
     def login_usr_psw(self, email, psw):
         usr = self.get_usr(email)
@@ -115,15 +114,31 @@ class DataBase:
 
         return usr
 
-    def login_usr_jwt(self, email, token):
-        usr = self.get_usr(email)
-        if usr is None:
+    def login_usr_jwt(self, token):
+
+        dec_token = JWTHelper.verify_token(token)
+
+        if dec_token == -1:
             return -1
 
-        if token != usr.Token:
+        usr = self.get_usr(dec_token["user_email"])
+        if usr is None:
             return -2
-
         return usr
+
+    def insert_new_user(self, email, username, psw):
+        if self.get_usr(email) is not None:
+            return False
+
+        salt = self.gen_salt()
+        hashed_psw = self._hash_psw(psw, salt)
+
+        self.cursor.execute("INSERT INTO users (email, psw_hash, username, salt) "
+                            "VALUES (?, ?, ?, ?)",
+                            (email, hashed_psw, username, salt))
+
+        self.db_con.commit()
+        return True
 
     def _hash_psw(self, psw, salt):
         psw = psw.encode()

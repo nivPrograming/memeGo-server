@@ -3,13 +3,12 @@ import base64
 
 
 class User:
-    def __init__(self, ID, username, email, psw_hash, salt, token):
+    def __init__(self, ID, username, email, psw_hash, salt):
         self.Id = ID
         self.Username = username
         self.Email = email
         self.Psw_hash = psw_hash
         self.Salt = salt
-        self.Token = token
 
     def to_bytes(self):
         """Convert User to JSON bytes for network transmission"""
@@ -19,7 +18,6 @@ class User:
             'email': self.Email,
             'psw_hash': base64.b64encode(self.Psw_hash).decode('utf-8'),
             'salt': base64.b64encode(self.Salt).decode('utf-8'),
-            'token': base64.b64encode(self.Token).decode('utf-8')
         }
         return json.dumps(data).encode('utf-8')
 
@@ -33,7 +31,6 @@ class User:
             obj['email'],
             base64.b64decode(obj['psw_hash']),
             base64.b64decode(obj['salt']),
-            base64.b64decode(obj['token'])
         )
 
 
