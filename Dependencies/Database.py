@@ -1,6 +1,7 @@
 import sqlite3
 from hashlib import sha256
 import random
+from Dependencies.JWTHelper import JWTHelper
 
 from Models.data_base_types import *
 
@@ -115,14 +116,16 @@ class DataBase:
 
         return usr
 
-    def login_usr_jwt(self, email, token):
-        usr = self.get_usr(email)
-        if usr is None:
+    def login_usr_jwt(self, token):
+
+        dec_token = JWTHelper.verify_token(token)
+
+        if dec_token == -1:
             return -1
 
-        if token != usr.Token:
+        usr = self.get_usr(dec_token["user_email"])
+        if usr is None:
             return -2
-
         return usr
 
     def _hash_psw(self, psw, salt):
